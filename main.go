@@ -2,10 +2,8 @@ package main
  
 import (
     "net/http"
-    "database/sql"
     "fmt"
-    "github.com/go-redis/redis"
-    _ "github.com/lib/pq"
+    "utils"
 )
 
 func signUp(w http.ResponseWriter, r *http.Request) {}
@@ -20,9 +18,10 @@ func signOut(w http.ResponseWriter, r *http.Request) {}
 
 func main() {
      
+    utils.connectToDb()
 
-    http.handleFunc("/signUp", signUp)
-    http.handleFunc("/signIn", signIn)
-    http.handleFunc("/signOut", signOut)
-    http.handleFunc("/userInfo", getUser)
+    http.HandleFunc("/signUp", signUp)
+    http.HandleFunc("/signIn", signIn)
+    http.HandleFunc("/signOut", signOut)
+    http.HandleFunc("/userInfo", getUser)
 }
