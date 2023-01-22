@@ -3,7 +3,7 @@ package main
 import (
     "net/http"
     "fmt"
-    "utils"
+    "utils/utils"
 )
 
 func signUp(w http.ResponseWriter, r *http.Request) {}
