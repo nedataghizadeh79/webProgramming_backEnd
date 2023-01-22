@@ -11,7 +11,7 @@ const (
     host     = "localhost"
     port     = 5432
     user     = "postgres"
-    password = "example"
+    password = "1234"
     dbname   = "shaparak"
 )
 
