@@ -20,6 +20,7 @@ func signOut(w http.ResponseWriter, r *http.Request) {}
 
 func main() {
     utils.ConnectToDb()
+    utils.GetUserData("user:1", "data")
 
     http.HandleFunc("/signUp", signUp)
     http.HandleFunc("/signIn", signIn)

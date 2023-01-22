@@ -3,7 +3,8 @@ package utils
 import(
 	"database/sql"
     "fmt"
-    "github.com/go-redis/redis"
+    "context"
+    "github.com/go-redis/redis/v8"
     _ "github.com/lib/pq"
 )
 
@@ -16,17 +17,13 @@ const (
 )
 
 func ConnectToDb() {
-	   // connection string
-	   psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-         
-	   // open database
+    psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+        
    db, err := sql.Open("postgres", psqlconn)
    CheckError(err)
 	
-	   // close database
    defer db.Close()
 
-	   // check db
    err = db.Ping()
    CheckError(err)
 
@@ -36,5 +33,23 @@ func ConnectToDb() {
 func CheckError(err error) {
     if err != nil {
         panic(err)
+    }
+}
+
+func GetUserData(username string, password string) {
+    ctx := context.Background()
+    client := redis.NewClient(&redis.Options{
+        Addr:     "localhost:6379",
+        Password: "", 
+        DB:       0,  
+    })
+
+    val, err := client.Get(ctx, username).Result()
+    
+    CheckError(err)
+    if (val != "") {
+        fmt.Println(val)
+    } else {
+        fmt.Println("key not found")
     }
 }
