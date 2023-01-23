@@ -5,7 +5,7 @@ import (
     "os"
     "fmt"
     "errors"
-    utils "server/utils"
+    utils "AuthService/utils"
 )
 
 func signUp(w http.ResponseWriter, r *http.Request) {fmt.Println("signup")}
