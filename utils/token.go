@@ -1,10 +1,8 @@
 package utils
 
 import (
-	"fmt"
 	"net/http"
 	"time"
-	"os"
 
 	"github.com/golang-jwt/jwt/v4"
 )
@@ -16,9 +14,9 @@ func CreateToken(userId string) (string, error) {
 
 	claims := token.Claims.(jwt.MapClaims)
 	claims["exp"] = time.Now().Add(time.Hour).Unix()
-	claims["sub"] = payload
+	claims["sub"] = userId
 
-	tokenStr, err := token.SignedString(GetEnv("PRIVATE_JWT_TOKEN"))
+	tokenStr, err := token.SignedString(key)
 
 	if err != nil {
 		return "", err
@@ -54,14 +52,4 @@ func ValidateJWT(next func(w http.ResponseWriter, r *http.Request)) http.Handler
 			w.Write([]byte("not authorized"))
 		}
 	})
-}
-
-func GetJwt(w http.ResponseWriter, r *http.Request) {
-	if r.Header["Access"] != nil {
-		token, err := CreateToken()
-		if err != nil {
-			return
-		}
-		fmt.Fprint(w, token)
-	}
 }
