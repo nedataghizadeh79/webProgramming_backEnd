@@ -8,13 +8,13 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-func CreateToken(privateKey string) (string, error) {
+func CreateToken() (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
 	claims["exp"] = time.Now().Add(time.Hour).Unix()
 
-	tokenStr, err := token.SignedString(privateKey)
+	tokenStr, err := token.SignedString(GetEnv("PRIVATE_JWT_TOKEN"))
 
 	if err != nil {
 		return "", err
@@ -34,7 +34,7 @@ func ValidateJWT(next func(w http.ResponseWriter, r *http.Request)) http.Handler
 					w.WriteHeader(http.StatusUnauthorized)
 					w.Write([]byte("not authorized"))
 				}
-				return privateKey, nil
+				return GetEnv("PRIVATE_JWT_KEY"), nil
 			})
 
 			if err != nil {
@@ -54,23 +54,10 @@ func ValidateJWT(next func(w http.ResponseWriter, r *http.Request)) http.Handler
 
 func GetJwt(w http.ResponseWriter, r *http.Request) {
 	if r.Header["Access"] != nil {
-		token, err := CreateToken("1234")
+		token, err := CreateToken()
 		if err != nil {
 			return
 		}
 		fmt.Fprint(w, token)
 	}
-}
-
-func Home(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "super secret area")
-}
-
-func main() {
-
-	http.Handle("/api", ValidateJWT(Home))
-	http.HandleFunc("/jwt", GetJwt)
-
-	http.ListenAndServe(":3500", nil)
-
 }
