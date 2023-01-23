@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+    "github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
@@ -28,17 +29,12 @@ func main() {
 	utils.ConnectToDb()
 	utils.GetUserData("user:1", "data")
 
-	http.HandleFunc("/signUp", signUp)
-	http.HandleFunc("/signIn", signIn)
-	http.HandleFunc("/signOut", signOut)
-	http.HandleFunc("/userInfo", getUser)
+    r := gin.Default
 
-	err := http.ListenAndServe(":3333", nil)
+	r.POST("/signUp", signUp)
+	r.POST("/signIn", signIn)
+	r.POST("/signOut", signOut)
+	r.GET("/userInfo", getUser)
 
-	if errors.Is(err, http.ErrServerClosed) {
-		fmt.Printf("server closed\n")
-	} else if err != nil {
-		fmt.Printf("error starting server: %s\n", err)
-		os.Exit(1)
-	}
+	r.run()
 }
