@@ -11,13 +11,13 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func signUp(w http.ResponseWriter, r *http.Request) { fmt.Println("signup") }
+func signUp(c *gin.Context) { fmt.Println("signup") }
 
-func signIn(w http.ResponseWriter, r *http.Request) { fmt.Println("signin") }
+func signIn(c *gin.Context) { fmt.Println("signin") }
 
-func getUser(w http.ResponseWriter, r *http.Request) { fmt.Println("user data") }
+func getUser(c *gin.Context) { fmt.Println("user data") }
 
-func signOut(w http.ResponseWriter, r *http.Request) {}
+func signOut(c *gin.Context) {}
 
 func init() {
 	if err := godotenv.Load(); err != nil {
