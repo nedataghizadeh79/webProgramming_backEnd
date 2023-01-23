@@ -4,15 +4,19 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+	"os"
 
 	"github.com/golang-jwt/jwt/v4"
 )
 
-func CreateToken() (string, error) {
+var key = []byte(GetEnv("SECRET_JWT_KEY"))
+
+func CreateToken(userId string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
 	claims["exp"] = time.Now().Add(time.Hour).Unix()
+	claims["sub"] = payload
 
 	tokenStr, err := token.SignedString(GetEnv("PRIVATE_JWT_TOKEN"))
 
