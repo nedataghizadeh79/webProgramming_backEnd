@@ -1,6 +1,7 @@
 package utils
 
 import (
+	models "AuthService/models"
 	"context"
 	"database/sql"
 	"fmt"
@@ -17,7 +18,8 @@ var (
 	dbname   = GetEnv("POSTGRES_DB")
 )
 
-func ConnectToDb() {
+func ConnectToDb() *sql.DB {
+
 	psqlconn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 
 	db, err := sql.Open("postgres", psqlconn)
@@ -28,7 +30,7 @@ func ConnectToDb() {
 	err = db.Ping()
 	CheckError(err)
 
-	fmt.Println("Connected!")
+	return db
 }
 
 func CheckError(err error) {
@@ -53,4 +55,22 @@ func GetUserData(username string, password string) {
 	} else {
 		fmt.Println("key not found")
 	}
+}
+
+func InserUser(user models.UserAccount) {
+	db := ConnectToDb()
+	defer db.Close()
+
+	sqlStatement := "INSERT INTO user_account (email, phone_number, gender, first_name, last_name, password_hash) VALUES ($1, $2, $3, $4, $5, $6)"
+	_, err := db.Exec(sqlStatement, user.Email, user.PhoneNumber, user.Gender, user.FirstName, user.LastName, user.PasswordHash)
+	CheckError(err)
+}
+
+func FindUser(user models.SignInInput) {
+	db := ConnectToDb()
+	defer db.Close()
+
+	sqlStatement := "SELECT * FROM user_account WHERE email = $1"
+	_, error := db.Query(sqlStatement, user.Email)
+	CheckError(error)
 }
