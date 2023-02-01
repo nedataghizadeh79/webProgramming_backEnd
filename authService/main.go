@@ -2,12 +2,13 @@ package main
 
 import (
 	utils "AuthService/utils"
-
-	"fmt"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"fmt"
+	"net"
+
 	"github.com/joho/godotenv"
+	"google.golang.org/grpc"
 )
 
 func signUp(w http.ResponseWriter, r *http.Request) {
@@ -15,11 +16,11 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 	utils.InsertUser(w, r)
 }
 
-func signIn(c *gin.Context) { fmt.Println("signin") }
+func signIn() { fmt.Println("signin") }
 
-func getUser(c *gin.Context) { fmt.Println("user data") }
+func getUser() { fmt.Println("user data") }
 
-func signOut(c *gin.Context) {}
+func signOut() {}
 
 func init() {
 	if err := godotenv.Load(); err != nil {
@@ -28,20 +29,15 @@ func init() {
 }
 
 func main() {
-	utils.ConnectToDb()
-	utils.GetUserData("user:1", "data")
+	lis, err := net.Listen("tcp", ":9000")
+	if err != nil {
+		println("failed!")
+	}
 
-	// r := gin.Default()
+	grpcServer := grpc.NewServer()
 
-	// r.POST("/signUp", signUp)
-	// r.POST("/signIn", signIn)
-	// r.POST("/signOut", signOut)
-	// r.GET("/userInfo", getUser)
-
-	// r.Run()
-
-	mux := http.NewServeMux()
-
-	mux.HandleFunc("/signUp", signUp)
+	if err := grpcServer.Serve(lis); err != nil {
+		println("failed!")
+	}
 
 }

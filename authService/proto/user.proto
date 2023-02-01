@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package user;
+
+message SignUpUser{
+    string firstName=16;
+    string lastName=17;
+    string phoneNumber=18;
+    string password=19;
+    string email=20;
+    string gender = 21;
+}
+
+message Token {
+    bytes error = 22;
+    bytes token = 23;
+}
+
+service RouteGuide {
+    rpc signUp(SignUpUser) returns (Token) {}
+}
