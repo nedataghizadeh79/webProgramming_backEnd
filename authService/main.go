@@ -2,7 +2,8 @@ package main
 
 import (
 	utils "AuthService/utils"
-	"net/http"
+	pb "AuthService/proto"
+	// "net/http"
 
 	"fmt"
 	"net"
@@ -11,16 +12,17 @@ import (
 	"google.golang.org/grpc"
 )
 
-func signUp(w http.ResponseWriter, r *http.Request) {
 
-	utils.InsertUser(w, r)
-}
+// func (s *routeGuideService) signUp(ctx context.Context, user *pb.SignUpUser) (*pb.Token, error) {
 
-func signIn() { fmt.Println("signin") }
+// 	return utils.InsertUser(user)
+// }
 
-func getUser() { fmt.Println("user data") }
+// func signIn() { fmt.Println("signin") }
 
-func signOut() {}
+// func getUser() { fmt.Println("user data") }
+
+// func signOut() {}
 
 func init() {
 	if err := godotenv.Load(); err != nil {
@@ -34,7 +36,10 @@ func main() {
 		println("failed!")
 	}
 
+	s := utils.RouteGuideServer{}
 	grpcServer := grpc.NewServer()
+	
+	pb.RegisterRouteGuideServer(grpcServer, &s)
 
 	if err := grpcServer.Serve(lis); err != nil {
 		println("failed!")

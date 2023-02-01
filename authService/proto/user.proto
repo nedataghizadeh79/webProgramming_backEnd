@@ -14,8 +14,8 @@ message SignUpUser{
 }
 
 message Token {
-    bytes error = 22;
-    bytes token = 23;
+    string error = 22;
+    string token = 23;
 }
 
 service RouteGuide {
