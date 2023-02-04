@@ -97,11 +97,13 @@ func InsertUser(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func FindUser(user models.SignInInput) {
+func FindUser(email string) {
 	db := ConnectToDb()
 	defer db.Close()
 
 	sqlStatement := "SELECT * FROM user_account WHERE email = $1"
-	_, err := db.Query(sqlStatement, user.Email)
+	data, err := db.Query(sqlStatement, email)
 	CheckError(err)
+
+	fmt.Println(data)
 }

@@ -16,19 +16,20 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 	utils.InsertUser(w, r)
 }
 
-func check(w http.ResponseWriter, r *http.Request) {
+func signIn(w http.ResponseWriter, r *http.Request) {
 	hmacSecret := []byte(utils.GetEnv("SECRET_JWT_KEY"))
 	token, _ := jwt.Parse(r.Header["Token"][0], func(token *jwt.Token) (interface{}, error) {
-		// check token signing method etc
 		return hmacSecret, nil
 	})
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		w.Write([]byte(claims["sub"].(string)))
-	}
-}
+	var email string
 
-func signIn(c *gin.Context) { fmt.Println("signin") }
+	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		email = claims["sub"].(string)
+	}
+
+	utils.FindUser(email)
+}
 
 func getUser(c *gin.Context) { fmt.Println("user data") }
 
@@ -50,7 +51,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/signUp", signUp)
-	mux.Handle("/checkAuth", utils.ValidateJWT(check))
+	mux.Handle("/signIn", utils.ValidateJWT(signIn))
 
 	err := http.ListenAndServe(":3333", mux)
 
