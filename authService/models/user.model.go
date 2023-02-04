@@ -23,3 +23,7 @@ type UserResponse struct {
 	LastName     string `json:"lastname,omitempty"`
 	FirstName    string `json:"firstname,omitempty"`
 }
+
+type AuthToken struct {
+	Token string `json:"token,omitempty"`
+}

@@ -75,11 +75,25 @@ func InsertUser(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+	}
+
+	token, token_err := CreateToken(user.Email)
+
+	if token_err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("bad request"))
+	}
+
+	tokenString, j_err := json.Marshal(&models.AuthToken{Token: token})
+
+	if j_err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("bad request"))
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("user inserted"))
+	w.Write(tokenString)
 
 }
 

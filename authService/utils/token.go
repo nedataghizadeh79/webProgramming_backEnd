@@ -9,12 +9,12 @@ import (
 
 var key = []byte(GetEnv("SECRET_JWT_KEY"))
 
-func CreateToken(userId string) (string, error) {
+func CreateToken(email string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
 	claims["exp"] = time.Now().Add(time.Hour).Unix()
-	claims["sub"] = userId
+	claims["sub"] = email
 
 	tokenStr, err := token.SignedString(key)
 
@@ -36,7 +36,7 @@ func ValidateJWT(next func(w http.ResponseWriter, r *http.Request)) http.Handler
 					w.WriteHeader(http.StatusUnauthorized)
 					w.Write([]byte("not authorized"))
 				}
-				return GetEnv("PRIVATE_JWT_KEY"), nil
+				return key, nil
 			})
 
 			if err != nil {

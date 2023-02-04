@@ -8,11 +8,24 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 )
 
 func signUp(w http.ResponseWriter, r *http.Request) {
 
 	utils.InsertUser(w, r)
+}
+
+func check(w http.ResponseWriter, r *http.Request) {
+	hmacSecret := []byte(utils.GetEnv("SECRET_JWT_KEY"))
+	token, _ := jwt.Parse(r.Header["Token"][0], func(token *jwt.Token) (interface{}, error) {
+		// check token signing method etc
+		return hmacSecret, nil
+	})
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		w.Write([]byte(claims["sub"].(string)))
+	}
 }
 
 func signIn(c *gin.Context) { fmt.Println("signin") }
@@ -37,6 +50,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/signUp", signUp)
+	mux.Handle("/checkAuth", utils.ValidateJWT(check))
 
 	err := http.ListenAndServe(":3333", mux)
 
