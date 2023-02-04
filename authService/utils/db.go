@@ -38,6 +38,22 @@ func CheckError(err error) {
 	}
 }
 
+func GetToken(key string) (tokenJson []byte, err error) {
+	token, token_err := CreateToken(key)
+
+	if token_err != nil {
+		return nil, token_err
+	}
+
+	tokenString, j_err := json.Marshal(&models.AuthToken{Token: token})
+
+	if j_err != nil {
+		return nil, j_err
+	}
+
+	return tokenString, nil
+}
+
 func GetUserData(username string, password string) {
 	ctx := context.Background()
 	client := redis.NewClient(&redis.Options{
@@ -78,23 +94,59 @@ func InsertUser(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 	}
 
-	token, token_err := CreateToken(user.Email)
+	tokenString, token_err := GetToken(user.Email)
 
 	if token_err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("bad request"))
-	}
-
-	tokenString, j_err := json.Marshal(&models.AuthToken{Token: token})
-
-	if j_err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("bad request"))
+		w.Write([]byte(token_err.Error()))
 	}
 
 	w.WriteHeader(http.StatusCreated)
 	w.Write(tokenString)
 
+}
+
+func SignInUser(w http.ResponseWriter, r *http.Request) {
+	var user models.SignInInput
+
+	en_err := json.NewDecoder(r.Body).Decode(&user)
+
+	if en_err != nil {
+		http.Error(w, en_err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	db := ConnectToDb()
+	defer db.Close()
+
+	sqlStatement := "SELECT password_hash FROM user_account WHERE email =$1"
+	row := db.QueryRow(sqlStatement, user.Email)
+
+	var password_hash string
+
+	switch err := row.Scan(&password_hash); err {
+	case sql.ErrNoRows:
+		w.WriteHeader(http.StatusNotFound)
+	case nil:
+		tokenString, token_err := GetToken(user.Email)
+		if token_err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(token_err.Error()))
+			return
+		}
+
+		passErr := ComparePassword(password_hash, user.Password)
+		if passErr != nil {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte("password incorrect"))
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write(tokenString)
+	default:
+		panic(err)
+	}
 }
 
 func FindUser(email string) {

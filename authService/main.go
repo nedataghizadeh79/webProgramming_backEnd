@@ -4,7 +4,6 @@ import (
 	utils "AuthService/utils"
 	"log"
 
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -17,6 +16,10 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 }
 
 func signIn(w http.ResponseWriter, r *http.Request) {
+	utils.SignInUser(w, r)
+}
+
+func getUser(w http.ResponseWriter, r *http.Request) {
 	hmacSecret := []byte(utils.GetEnv("SECRET_JWT_KEY"))
 	token, _ := jwt.Parse(r.Header["Token"][0], func(token *jwt.Token) (interface{}, error) {
 		return hmacSecret, nil
@@ -30,8 +33,6 @@ func signIn(w http.ResponseWriter, r *http.Request) {
 
 	utils.FindUser(email)
 }
-
-func getUser(c *gin.Context) { fmt.Println("user data") }
 
 func signOut(c *gin.Context) {}
 
@@ -51,7 +52,8 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/signUp", signUp)
-	mux.Handle("/signIn", utils.ValidateJWT(signIn))
+	mux.HandleFunc("/signIn", signIn)
+	mux.Handle("/user", utils.ValidateJWT(getUser))
 
 	err := http.ListenAndServe(":3333", mux)
 
