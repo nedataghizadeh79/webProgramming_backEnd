@@ -1,9 +1,11 @@
 package main
 
 import (
+	"AuthService/models"
 	utils "AuthService/utils"
 	"log"
 
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -12,6 +14,14 @@ import (
 )
 
 func signUp(w http.ResponseWriter, r *http.Request) {
+	var user models.UserAccount
+	error := json.NewDecoder(r.Body).Decode(&user)
+	if (error != nil) {
+		http.Error(w, error.Error(), http.StatusBadRequest)
+		return
+	}
+
+	utils.ValidateSignUpData(user)
 
 	utils.InsertUser(w, r)
 }
