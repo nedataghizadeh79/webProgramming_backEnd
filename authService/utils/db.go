@@ -23,11 +23,8 @@ var (
 func ConnectToDb() *sql.DB {
 
 	psqlconn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-
 	db, err := sql.Open("postgres", psqlconn)
 	CheckError(err)
-
-	defer db.Close()
 
 	err = db.Ping()
 	CheckError(err)
@@ -70,8 +67,10 @@ func InsertUser(w http.ResponseWriter, r *http.Request) {
 	db := ConnectToDb()
 	defer db.Close()
 
+	hashedPassword := HashPassword(user.Password)
+
 	sqlStatement := "INSERT INTO user_account (email, phone_number, gender, first_name, last_name, password_hash) VALUES ($1, $2, $3, $4, $5, $6)"
-	_, err := db.Exec(sqlStatement, user.Email, user.PhoneNumber, user.Gender, user.FirstName, user.LastName, user.PasswordHash)
+	_, err := db.Exec(sqlStatement, user.Email, user.PhoneNumber, user.Gender, user.FirstName, user.LastName, hashedPassword)
 	CheckError(err)
 
 	if err != nil {
