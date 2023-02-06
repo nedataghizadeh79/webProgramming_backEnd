@@ -47,13 +47,19 @@ func signOut(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 
-	var token models.AuthToken = models.AuthToken{r.Header["Token"][0]}
+	if r.Header.Get("Token") == "" {
+		http.Error(w, "Token not set", http.StatusUnauthorized)
+	}
+
+	var token models.AuthToken = models.AuthToken{Token: r.Header["Token"][0]}
 
 	log_err := utils.AddExpiredToken(token)
 
 	if log_err != nil {
-
+		http.Error(w, "Operation failed", http.StatusInternalServerError)
 	}
+
+	w.WriteHeader(http.StatusOK)
 
 }
 
