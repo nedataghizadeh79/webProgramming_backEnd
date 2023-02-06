@@ -11,15 +11,23 @@ import (
 )
 
 func signUp(w http.ResponseWriter, r *http.Request) {
-
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
 	utils.InsertUser(w, r)
 }
 
 func signIn(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
 	utils.SignInUser(w, r)
 }
 
 func getUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
 	hmacSecret := []byte(utils.GetEnv("SECRET_JWT_KEY"))
 	token, _ := jwt.Parse(r.Header["Token"][0], func(token *jwt.Token) (interface{}, error) {
 		return hmacSecret, nil
