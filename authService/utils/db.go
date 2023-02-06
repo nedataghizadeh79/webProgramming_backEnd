@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-redis/redis/v8"
 	_ "github.com/lib/pq"
@@ -158,4 +159,15 @@ func FindUser(email string) {
 	CheckError(err)
 
 	fmt.Println(data)
+}
+
+func AddExpiredToken(token models.AuthToken) error {
+	timestamp := time.Now()
+
+	db := ConnectToDb()
+	defer db.Close()
+
+	_, err := db.Exec("INSERT INTO unauthorized_token VALUES($s1, $s2)", token, timestamp)
+
+	return err
 }
