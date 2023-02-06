@@ -40,22 +40,13 @@ func main() {
 	utils.ConnectToDb()
 	utils.GetUserData("user:1", "data")
 
-	// r := gin.Default()
-
-	// r.POST("/signUp", signUp)
-	// r.POST("/signIn", signIn)
-	// r.POST("/signOut", signOut)
-	// r.GET("/userInfo", getUser)
-
-	// r.Run()
-
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/signUp", signUp)
 	mux.HandleFunc("/signIn", signIn)
 	mux.Handle("/user", utils.ValidateJWT(getUser))
 
-	err := http.ListenAndServe(":3333", mux)
+	err := http.ListenAndServeTLS(":9000", "./certs/server.crt", "./certs/server.key", mux)
 
 	if err != nil {
 		log.Fatal(err)
