@@ -15,13 +15,11 @@ type UserAccount struct {
 }
 
 type UserResponse struct {
-	UserId       string `json:"id,omitempty"`
-	Email        string `json:"email,omitempty"`
-	Gender       string `json:"gender,omitempty"`
-	PhoneNumber  string `json:"phonenumber,omitempty"`
-	PasswordHash string `json:"password,omitempty"`
-	LastName     string `json:"lastname,omitempty"`
-	FirstName    string `json:"firstname,omitempty"`
+	LastName    string `json:"lastname,omitempty"`
+	FirstName   string `json:"firstname,omitempty"`
+	Gender      string `json:"gender,omitempty"`
+	Email       string `json:"email,omitempty"`
+	PhoneNumber string `json:"phonenumber,omitempty"`
 }
 
 type AuthToken struct {

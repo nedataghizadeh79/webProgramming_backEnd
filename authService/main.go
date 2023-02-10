@@ -6,13 +6,12 @@ import (
 	"log"
 
 	"net/http"
-
-	"github.com/golang-jwt/jwt"
 )
 
 func signUp(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
 	}
 	utils.InsertUser(w, r)
 }
@@ -20,6 +19,7 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 func signIn(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
 	}
 	utils.SignInUser(w, r)
 }
@@ -27,24 +27,16 @@ func signIn(w http.ResponseWriter, r *http.Request) {
 func getUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	}
-	hmacSecret := []byte(utils.GetEnv("SECRET_JWT_KEY"))
-	token, _ := jwt.Parse(r.Header["Token"][0], func(token *jwt.Token) (interface{}, error) {
-		return hmacSecret, nil
-	})
-
-	var email string
-
-	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		email = claims["sub"].(string)
+		return
 	}
 
-	utils.FindUser(email)
+	utils.FindUser(w, r)
 }
 
 func signOut(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
 	}
 
 	if r.Header.Get("Token") == "" {
@@ -56,7 +48,7 @@ func signOut(w http.ResponseWriter, r *http.Request) {
 	log_err := utils.AddExpiredToken(token)
 
 	if log_err != nil {
-		http.Error(w, "Operation failed", http.StatusInternalServerError)
+		http.Error(w, log_err.Error(), http.StatusInternalServerError)
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -64,8 +56,6 @@ func signOut(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	utils.ConnectToDb()
-	utils.GetUserData("user:1", "data")
 
 	mux := http.NewServeMux()
 

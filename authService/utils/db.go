@@ -5,11 +5,13 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/golang-jwt/jwt/v4"
 	_ "github.com/lib/pq"
 )
 
@@ -21,20 +23,23 @@ var (
 	dbname   = GetEnv("POSTGRES_DB")
 )
 
-func ConnectToDb() *sql.DB {
+func ConnectToDb(w http.ResponseWriter) *sql.DB {
 
 	psqlconn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 	db, err := sql.Open("postgres", psqlconn)
-	CheckError(err)
+	CheckError(err, w)
 
 	err = db.Ping()
-	CheckError(err)
+	CheckError(err, w)
 
 	return db
 }
 
-func CheckError(err error) {
+func CheckError(err error, w http.ResponseWriter) {
 	if err != nil {
+		if w != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 		panic(err)
 	}
 }
@@ -65,7 +70,7 @@ func GetUserData(username string, password string) {
 
 	val, err := client.Get(ctx, username).Result()
 
-	CheckError(err)
+	CheckError(err, nil)
 	if val != "" {
 		fmt.Println(val)
 	} else {
@@ -81,14 +86,14 @@ func InsertUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db := ConnectToDb()
+	db := ConnectToDb(w)
 	defer db.Close()
 
 	hashedPassword := HashPassword(user.Password)
 
 	sqlStatement := "INSERT INTO user_account (email, phone_number, gender, first_name, last_name, password_hash) VALUES ($1, $2, $3, $4, $5, $6)"
 	_, err := db.Exec(sqlStatement, user.Email, user.PhoneNumber, user.Gender, user.FirstName, user.LastName, hashedPassword)
-	CheckError(err)
+	CheckError(err, w)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -117,7 +122,7 @@ func SignInUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db := ConnectToDb()
+	db := ConnectToDb(w)
 	defer db.Close()
 
 	sqlStatement := "SELECT password_hash FROM user_account WHERE email =$1"
@@ -150,24 +155,78 @@ func SignInUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func FindUser(email string) {
-	db := ConnectToDb()
+func FindUser(w http.ResponseWriter, r *http.Request) {
+
+	hmacSecret := []byte(GetEnv("SECRET_JWT_KEY"))
+	token, _ := jwt.Parse(r.Header["Token"][0], func(token *jwt.Token) (interface{}, error) {
+		return hmacSecret, nil
+	})
+
+	var email string
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		email = claims["sub"].(string)
+	}
+
+	db := ConnectToDb(w)
 	defer db.Close()
 
-	sqlStatement := "SELECT * FROM user_account WHERE email = $1"
-	data, err := db.Query(sqlStatement, email)
-	CheckError(err)
+	sqlStatement := "SELECT first_name, last_name, gender, email, phone_number FROM user_account WHERE email = $1"
+	row := db.QueryRow(sqlStatement, email)
 
-	fmt.Println(data)
+	var user models.UserResponse = models.UserResponse{}
+
+	switch err := row.Scan(&user.FirstName, &user.LastName, &user.Gender, &user.Email, &user.PhoneNumber); err {
+	case sql.ErrNoRows:
+		w.WriteHeader(http.StatusNotFound)
+	case nil:
+		userJson, json_err := json.Marshal(&user)
+
+		if json_err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write(userJson)
+	default:
+		panic(err)
+	}
+
 }
 
 func AddExpiredToken(token models.AuthToken) error {
-	timestamp := time.Now()
 
-	db := ConnectToDb()
+	hmacSecret := []byte(GetEnv("SECRET_JWT_KEY"))
+	jwtToken, _ := jwt.Parse(token.Token, func(token *jwt.Token) (interface{}, error) {
+		return hmacSecret, nil
+	})
+
+	var email string
+
+	if claims, ok := jwtToken.Claims.(jwt.MapClaims); ok {
+		email = claims["sub"].(string)
+	}
+
+	db := ConnectToDb(nil)
 	defer db.Close()
 
-	_, err := db.Exec("INSERT INTO unauthorized_token VALUES($s1, $s2)", token, timestamp)
+	sqlStatement := "SELECT user_id FROM user_account WHERE email = $1"
+	row := db.QueryRow(sqlStatement, email)
+
+	var user_id int
+
+	if err := row.Scan(&user_id); err != nil {
+		if err == sql.ErrNoRows {
+			return errors.New("user not found")
+		} else {
+			return errors.New("database crash")
+		}
+	}
+
+	timestamp := time.Now()
+	now := timestamp.Format("2006-01-02 15:04:05")
+
+	_, err := db.Exec("INSERT INTO unauthorized_token VALUES($1, $2, $3)", user_id, token.Token, now)
 
 	return err
 }
