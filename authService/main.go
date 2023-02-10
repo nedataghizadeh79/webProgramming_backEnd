@@ -4,6 +4,7 @@ import (
 	"AuthService/models"
 	utils "AuthService/utils"
 	"log"
+	"time"
 
 	"encoding/json"
 	"net/http"
@@ -81,6 +82,10 @@ func signOut(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+
+	redis_err := utils.AddToRedis(token.Token, "invalid", time.Hour)
+
+	utils.CheckError(redis_err, nil)
 
 }
 

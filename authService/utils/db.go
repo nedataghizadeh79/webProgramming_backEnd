@@ -35,6 +35,31 @@ func ConnectToDb(w http.ResponseWriter) *sql.DB {
 	return db
 }
 
+func AddToRedis(key string, value string, expiry time.Duration) error {
+	ctx := context.Background()
+	client := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	})
+
+	defer client.Close()
+
+	_, err := client.Set(ctx, key, value, expiry).Result()
+
+	return err
+
+	// val, err := client.Get(ctx, username).Result()
+
+	// CheckError(err, nil)
+	// if val != "" {
+	// 	fmt.Println(val)
+	// } else {
+	// 	fmt.Println("key not found")
+	// }
+
+}
+
 func CheckError(err error, w http.ResponseWriter) {
 	if err != nil {
 		if w != nil {
@@ -58,24 +83,6 @@ func GetToken(key string) (tokenJson []byte, err error) {
 	}
 
 	return tokenString, nil
-}
-
-func GetUserData(username string, password string) {
-	ctx := context.Background()
-	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
-		DB:       0,
-	})
-
-	val, err := client.Get(ctx, username).Result()
-
-	CheckError(err, nil)
-	if val != "" {
-		fmt.Println(val)
-	} else {
-		fmt.Println("key not found")
-	}
 }
 
 func InsertUser(w http.ResponseWriter, r *http.Request) {
@@ -109,6 +116,13 @@ func InsertUser(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	w.Write(tokenString)
+
+	var token models.AuthToken
+	json.Unmarshal(tokenString, &token)
+
+	redis_err := AddToRedis(token.Token, "valid", time.Hour)
+
+	CheckError(redis_err, nil)
 
 }
 
@@ -150,6 +164,13 @@ func SignInUser(w http.ResponseWriter, r *http.Request) {
 
 		w.WriteHeader(http.StatusOK)
 		w.Write(tokenString)
+
+		var token models.AuthToken
+		json.Unmarshal(tokenString, &token)
+
+		redis_err := AddToRedis(token.Token, "valid", time.Hour)
+
+		CheckError(redis_err, nil)
 	default:
 		panic(err)
 	}
