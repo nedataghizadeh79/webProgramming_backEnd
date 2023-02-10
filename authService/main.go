@@ -21,7 +21,11 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.ValidateSignUpData(user)
+	err := utils.ValidateSignUpData(user)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
 
 	utils.InsertUser(w, r)
 }
@@ -31,6 +35,21 @@ func signIn(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	var user models.SignInInput
+	error := json.NewDecoder(r.Body).Decode(&user)
+	if error != nil {
+		http.Error(w, error.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err := utils.ValidateSignInData(user)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	utils.SignInUser(w, r)
 }
 
