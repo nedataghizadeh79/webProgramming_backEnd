@@ -5,6 +5,7 @@ import (
 	utils "AuthService/utils"
 	"log"
 
+	"encoding/json"
 	"net/http"
 )
 
@@ -13,6 +14,15 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+	var user models.UserAccount
+	error := json.NewDecoder(r.Body).Decode(&user)
+	if error != nil {
+		http.Error(w, error.Error(), http.StatusBadRequest)
+		return
+	}
+
+	utils.ValidateSignUpData(user)
+
 	utils.InsertUser(w, r)
 }
 
