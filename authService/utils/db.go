@@ -189,12 +189,12 @@ func FindUser(w http.ResponseWriter, r *http.Request) {
 	db := ConnectToDb(w)
 	defer db.Close()
 
-	sqlStatement := "SELECT first_name, last_name, gender, email, phone_number FROM user_account WHERE email = $1"
+	sqlStatement := "SELECT user_id, first_name, last_name, gender, email, phone_number FROM user_account WHERE email = $1"
 	row := db.QueryRow(sqlStatement, email)
 
 	var user models.UserResponse = models.UserResponse{}
 
-	switch err := row.Scan(&user.FirstName, &user.LastName, &user.Gender, &user.Email, &user.PhoneNumber); err {
+	switch err := row.Scan(&user.UserId, &user.FirstName, &user.LastName, &user.Gender, &user.Email, &user.PhoneNumber); err {
 	case sql.ErrNoRows:
 		w.WriteHeader(http.StatusNotFound)
 	case nil:
