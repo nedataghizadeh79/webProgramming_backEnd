@@ -45,18 +45,25 @@ func AddToRedis(key string, value string, expiry time.Duration) error {
 
 	defer client.Close()
 
-	_, err := client.Set(ctx, key, value, expiry).Result()
+	err := client.Set(ctx, key, value, expiry).Err()
 
 	return err
 
-	// val, err := client.Get(ctx, username).Result()
+}
 
-	// CheckError(err, nil)
-	// if val != "" {
-	// 	fmt.Println(val)
-	// } else {
-	// 	fmt.Println("key not found")
-	// }
+func GetFromRedis(key string) (string, error) {
+	ctx := context.Background()
+	client := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	})
+
+	defer client.Close()
+
+	value, err := client.Get(ctx, key).Result()
+
+	return value, err
 
 }
 
