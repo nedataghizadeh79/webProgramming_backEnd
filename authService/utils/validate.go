@@ -7,7 +7,8 @@ import (
 )
 
 var (
-	persianRegex  = `^[\u0600-\u06FF]+[\s\u0600-\u06FF]*$`
+	// persianRegex  = `^[\u0600-\u06FF\s]+$`
+	persianRegex  = `^[a-zA-Z\s]+$`
 	emailRegex    = `^([\w\.\_]{2,10})@(\w{1,})\.([a-z]{2,4})$`
 	passwordRegex = `^\w{6,}$`
 	phoneRegex    = `^(\+98|09)\d{9}$`

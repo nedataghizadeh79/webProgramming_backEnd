@@ -26,9 +26,10 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
-	utils.InsertUser(w, r)
+	utils.InsertUser(w, user)
 }
 
 func signIn(w http.ResponseWriter, r *http.Request) {
@@ -51,7 +52,7 @@ func signIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.SignInUser(w, r)
+	utils.SignInUser(w, user)
 }
 
 func getUser(w http.ResponseWriter, r *http.Request) {
@@ -67,10 +68,6 @@ func signOut(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
-	}
-
-	if r.Header.Get("Token") == "" {
-		http.Error(w, "Token not set", http.StatusUnauthorized)
 	}
 
 	var token models.AuthToken = models.AuthToken{Token: r.Header["Token"][0]}
@@ -96,7 +93,7 @@ func main() {
 	mux.HandleFunc("/signUp", signUp)
 	mux.HandleFunc("/signIn", signIn)
 	mux.Handle("/user", utils.ValidateJWT(getUser))
-	mux.HandleFunc("/logOut", signOut)
+	mux.Handle("/logOut", utils.ValidateJWT(signOut))
 
 	err := http.ListenAndServeTLS(":9000", "./certs/server.crt", "./certs/server.key", mux)
 

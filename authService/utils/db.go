@@ -92,13 +92,7 @@ func GetToken(key string) (tokenJson []byte, err error) {
 	return tokenString, nil
 }
 
-func InsertUser(w http.ResponseWriter, r *http.Request) {
-	var user models.UserAccount
-	en_err := json.NewDecoder(r.Body).Decode(&user)
-	if en_err != nil {
-		http.Error(w, en_err.Error(), http.StatusBadRequest)
-		return
-	}
+func InsertUser(w http.ResponseWriter, user models.UserAccount) {
 
 	db := ConnectToDb(w)
 	defer db.Close()
@@ -110,15 +104,19 @@ func InsertUser(w http.ResponseWriter, r *http.Request) {
 	CheckError(err, w)
 
 	if err != nil {
+		fmt.Println("db error")
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
+		return
 	}
 
 	tokenString, token_err := GetToken(user.Email)
 
 	if token_err != nil {
+		fmt.Println("token error")
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(token_err.Error()))
+		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
@@ -133,15 +131,7 @@ func InsertUser(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func SignInUser(w http.ResponseWriter, r *http.Request) {
-	var user models.SignInInput
-
-	en_err := json.NewDecoder(r.Body).Decode(&user)
-
-	if en_err != nil {
-		http.Error(w, en_err.Error(), http.StatusBadRequest)
-		return
-	}
+func SignInUser(w http.ResponseWriter, user models.SignInInput) {
 
 	db := ConnectToDb(w)
 	defer db.Close()
