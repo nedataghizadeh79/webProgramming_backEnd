@@ -24,7 +24,7 @@ func verifyJwtExpiration(token string) (string, error) {
 	case sql.ErrNoRows:
 		return "valid", nil
 	case nil:
-		return "invlaid", nil
+		return "invalid", nil
 	default:
 		return "", err
 
@@ -77,7 +77,7 @@ func ValidateJWT(next func(w http.ResponseWriter, r *http.Request)) http.Handler
 					return
 				} else {
 					AddToRedis(tokenStr, result, time.Hour)
-					if val == "invalid" {
+					if result == "invalid" {
 						w.WriteHeader(http.StatusUnauthorized)
 						w.Write([]byte("not authorized"))
 						return
